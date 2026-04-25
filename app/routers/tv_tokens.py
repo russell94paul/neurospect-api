@@ -4,7 +4,7 @@ from __future__ import annotations
 import secrets
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -70,7 +70,7 @@ async def get_current_token(
     return _to_response(row)
 
 
-@router.delete("", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("", status_code=status.HTTP_204_NO_CONTENT, response_class=Response)
 async def revoke_token(
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),

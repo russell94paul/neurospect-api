@@ -1,7 +1,7 @@
 import uuid
 from pathlib import PurePosixPath
 
-from fastapi import APIRouter, Depends, Form, HTTPException, UploadFile, status
+from fastapi import APIRouter, Depends, Form, HTTPException, Response, UploadFile, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -117,7 +117,7 @@ async def list_screenshots(
 # DELETE /api/trades/{id}/screenshots/{sid}
 # ---------------------------------------------------------------------------
 
-@router.delete("/{trade_id}/screenshots/{screenshot_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{trade_id}/screenshots/{screenshot_id}", status_code=status.HTTP_204_NO_CONTENT, response_class=Response)
 async def delete_screenshot(
     trade_id: uuid.UUID,
     screenshot_id: uuid.UUID,

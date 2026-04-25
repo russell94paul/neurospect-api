@@ -2,6 +2,7 @@ services:
   - type: web
     name: neurospect-api
     runtime: python
+    pythonVersion: "3.13"
     region: oregon
     plan: starter
     buildCommand: pip install -r requirements.txt

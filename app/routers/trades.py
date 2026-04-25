@@ -1,7 +1,7 @@
 import uuid
 from datetime import date, datetime, timezone
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -140,7 +140,7 @@ async def update_trade(
 # DELETE /api/trades/{id}  — soft delete
 # ---------------------------------------------------------------------------
 
-@router.delete("/{trade_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{trade_id}", status_code=status.HTTP_204_NO_CONTENT, response_class=Response)
 async def delete_trade(
     trade_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
