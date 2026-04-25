@@ -1,0 +1,31 @@
+[tool.poetry]
+name = "neurospect-api"
+version = "0.1.0"
+description = "Neurospect trade journal & AI coach backend"
+authors = ["Paul Russell"]
+readme = "README.md"
+packages = [{ include = "app" }]
+
+[tool.poetry.dependencies]
+python = "^3.12"
+fastapi = "^0.115"
+uvicorn = { extras = ["standard"], version = "^0.34" }
+sqlalchemy = { extras = ["asyncio"], version = "^2.0" }
+asyncpg = "^0.30"
+alembic = "^1.14"
+pydantic-settings = "^2.7"
+httpx = "^0.28"
+python-jose = { extras = ["cryptography"], version = "^3.3" }
+python-multipart = "^0.0.20"
+boto3 = "^1.37"
+psycopg2-binary = "^2.9"
+anthropic = "^0.40"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.0"
+pytest-asyncio = "^0.24"
+httpx = "^0.28"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
