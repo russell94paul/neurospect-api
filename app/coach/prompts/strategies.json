@@ -1,0 +1,351 @@
+{
+  "_meta": {
+    "version": "1.0",
+    "generated": "2026-04-22",
+    "source": "concepts/entry-models/",
+    "note": "daily-bias-model is a prerequisite filter, not a standalone entry. All other entry models require it confirmed first.",
+    "minimum_confluence_universal": [
+      "HTF FVG bias confirmed (4H or Daily inside bullish/bearish FVG, or targeting nearest external liquidity)",
+      "Opening price position aligned (below midnight/8:30 open for longs; above for shorts)",
+      "Kill zone active at time of entry",
+      "PDA in discount (for longs: at or below 50% of the relevant expansion or consolidation range)",
+      "Entry on 1M or below (COS, CSD, or structural confirmation on the entry timeframe)"
+    ],
+    "stop_conventions": {
+      "fvg_entry": "Below Candle 1 of the FVG (all three candles that create the gap)",
+      "ob_entry": "Below the body low of the order block (bodies only, not wicks)",
+      "ote_entry": "Below the OTE block closing price (body, not wick)"
+    },
+    "target_conventions": {
+      "first_partial": "Opposite side of the consolidation/expansion range or first liquidity deviation",
+      "runner": "Previous day high/low; -2 to -2.5 Fibonacci deviation from the manipulation swing"
+    }
+  },
+  "strategies": [
+    {
+      "id": "daily-bias-model",
+      "name": "Daily Bias (HTF FVG + Opening Price Filter)",
+      "role": "prerequisite_filter",
+      "description": "Not a standalone entry. Prerequisite filter that establishes HTF directional bias (4H/Daily FVG cycle) and AMD opening price position. Must be confirmed before any other entry model is evaluated.",
+      "conditions": [
+        "4H FVG identified (bullish or bearish)",
+        "Current price position relative to FVG confirmed (inside / above / below)",
+        "Opening price position checked: below midnight/8:30/9:30 for longs; above for shorts"
+      ],
+      "checklist": [
+        {"id": "htf_fvg_identified", "label": "4H FVG identified (bullish or bearish)", "timeframe": "4H/Daily"},
+        {"id": "price_vs_fvg", "label": "Price position relative to FVG confirmed (inside / above / below)", "timeframe": "4H"},
+        {"id": "bias_written", "label": "Bias direction established before session"},
+        {"id": "midnight_marked", "label": "Midnight open (00:00 Eastern) reference available"},
+        {"id": "cme_rth_opens", "label": "8:30 and 9:30 opens reference available"},
+        {"id": "opening_price_check", "label": "Opening price position confirmed at session start"},
+        {"id": "org_size", "label": "ORG size noted — if < 50 handles NQ, HRLR conditions apply (use OTE model)"},
+        {"id": "calendar_check", "label": "Economic calendar checked (NFP Thu = avoid; FOMC AM only; CPI Mon = skip)"},
+        {"id": "kill_zone_active", "label": "Active kill zone identified for the session"}
+      ],
+      "stop_logic": "N/A — this is a filter, not an entry",
+      "target_logic": "N/A — determined by the active entry model once bias is confirmed",
+      "kill_zones": ["london", "ny_am", "ny_pm"],
+      "stand_aside_conditions": [
+        "HTF FVG violated (4H candle closed below bullish FVG)",
+        "Price above all three AM opens on a bullish bias day (distributing, not accumulating)",
+        "Price below all three AM opens on a bearish bias day (accumulating, not distributing)",
+        "Thursday pre-NFP week",
+        "CPI week Monday",
+        "ORG < 50 handles without an available OTE model setup"
+      ],
+      "integrates_with": [
+        "consolidation-model",
+        "expansion-retracement-model",
+        "reversal-raid-on-stops",
+        "london-model",
+        "model-2022-ote",
+        "smt-confirmation-entry"
+      ]
+    },
+    {
+      "id": "consolidation-model",
+      "name": "Consolidation Model",
+      "role": "entry",
+      "description": "Enter at a PDA at or below the 50% (EQ) of a consolidation range, after intra-range liquidity is swept and price returns toward the EQ. Target: opposite side of range, then PDH/PDL.",
+      "conditions": [
+        "HTF FVG (4H/Daily) bias confirmed",
+        "Opening price position aligned (below midnight/8:30 for longs; above for shorts)",
+        "Consolidation range identified on 1M–5M using candle bodies (not wicks)",
+        "Intra-range liquidity sweep completed (SSL swept for bullish; BSL swept for bearish)",
+        "Price returned toward the 50% (EQ) of the consolidation",
+        "PDA present at or below the EQ (FVG, OB, inversion FVG, rejection block, or volume imbalance)",
+        "Kill zone active (London preferred; NY AM and NY PM also valid)"
+      ],
+      "checklist": [
+        {"id": "htf_fvg", "label": "HTF FVG (4H/Daily) confirmed — price inside bullish FVG for longs", "timeframe": "4H/Daily"},
+        {"id": "opening_price", "label": "Opening price correct — below midnight open and/or 8:30 open for longs", "timeframe": "Daily/1H"},
+        {"id": "range_defined", "label": "Consolidation range defined by candle bodies (not wicks) — high and low marked", "timeframe": "1M–5M"},
+        {"id": "eq_identified", "label": "EQ (50%) of consolidation marked", "timeframe": "1M–5M"},
+        {"id": "intrarange_sweep", "label": "Intra-range liquidity swept (SSL taken for bullish setup)", "timeframe": "1M–5M"},
+        {"id": "sweep_rejected", "label": "Sweep rejected — price did not close below range low (rejection wick only)", "timeframe": "1M"},
+        {"id": "displacement_fvg", "label": "Displacement after sweep created a FVG or identifiable PDA", "timeframe": "1M"},
+        {"id": "pda_at_eq", "label": "PDA is at or below the EQ", "timeframe": "5M–15M"},
+        {"id": "kill_zone", "label": "Kill zone active at time of entry", "timeframe": "intraday"},
+        {"id": "ltf_cos", "label": "1M (or 15s) COS or structural confirmation present before entry", "timeframe": "1M/15s"},
+        {"id": "smt", "label": "SMT divergence at the sweep (optional — highest confidence add)", "timeframe": "1M–5M", "optional": true}
+      ],
+      "stop_logic": "FVG entry: below Candle 1 of the FVG. OB entry: below body low of the OB. Rejection block: below opening price of the sweep candle.",
+      "target_logic": "T1 (conservative): opposite side of the consolidation range. T2 (standard): BSL above the range (equal highs/swing high). T3 (best case): previous day high/low. T4 (extended): -1 to -2.5 Fibonacci deviation.",
+      "kill_zones": ["london", "ny_am", "ny_pm"],
+      "avoid_conditions": [
+        "Sunday consolidation ranges (no algorithmic delivery principle)",
+        "FOMC/NFP/CPI week before the news release",
+        "ORG < 50 handles NQ (HRLR — wider stops required; use OTE model instead)",
+        "Entry above the EQ (premium zone — low probability for longs)"
+      ],
+      "smt_signal": "At intra-range SSL sweep: if ES fails to make the same lower low as NQ (or vice versa) — bullish SMT divergence. Highest-probability version of this model."
+    },
+    {
+      "id": "expansion-retracement-model",
+      "name": "Expansion & Retracement (E&R) Model",
+      "role": "entry",
+      "description": "Enter at a FVG or OB at or below the 50% of a completed expansion leg, after the retracement has reached discount. Target: swing high (BSL) that capped the expansion, then PDH/PDL.",
+      "conditions": [
+        "Expansion leg identified (swing low to swing high, 1M–5M)",
+        "50% of expansion measured; discount zone is at or below 50%",
+        "FVG or OB present at or below the 50% of the expansion leg",
+        "HTF bias aligned (4H/Daily inside bullish FVG or targeting BSL)",
+        "Retracement in progress making lower highs (healthy) or choppy",
+        "Retracement has reached or entered the discount zone (at or below 50%)",
+        "Kill zone active"
+      ],
+      "checklist": [
+        {"id": "htf_fvg", "label": "HTF bias confirmed (4H/Daily inside bullish FVG for longs)", "timeframe": "4H/Daily"},
+        {"id": "opening_price", "label": "Opening price aligned (below midnight/8:30 open for longs)", "timeframe": "Daily/1H"},
+        {"id": "expansion_measured", "label": "Expansion leg identified and 50% (discount boundary) measured", "timeframe": "5M/1M"},
+        {"id": "pda_in_discount", "label": "FVG or OB exists AT OR BELOW the 50% of the expansion", "timeframe": "5M/15M"},
+        {"id": "discount_reached", "label": "Retracement has reached discount — price at or below 50%", "timeframe": "5M/1M"},
+        {"id": "not_fake", "label": "Not a fake retracement — discount reached, not just FVG filled above 50%", "timeframe": "5M"},
+        {"id": "pda_confirmed", "label": "PDA (FVG/OB) in discount confirmed active", "timeframe": "5M/15M"},
+        {"id": "kill_zone", "label": "Kill zone active", "timeframe": "intraday"},
+        {"id": "algo_sig", "label": "Algorithmic signature: candle body closing at/above FVG boundary (or 1M/15s COS)", "timeframe": "1M/15s"},
+        {"id": "ob_fvg_alignment", "label": "OB+FVG alignment at 50% present (optional — highest confluence)", "timeframe": "5M/15M", "optional": true}
+      ],
+      "stop_logic": "FVG entry: below Candle 1 of the FVG. OB entry: below body low of the order block. Trail option: trail below the three FVG candles once in profit.",
+      "target_logic": "T1: swing high (BSL) that capped the expansion. T2: previous day high/low. T3: one Fibonacci deviation beyond the first BSL.",
+      "kill_zones": ["london", "ny_am", "ny_pm"],
+      "retracement_quality": {
+        "healthy": "Steady lower highs into discount — LRLR continuation expected; standard entry",
+        "choppy": "Irregular back-and-forth into discount — use Model 2022 + OTE instead"
+      },
+      "avoid_conditions": [
+        "FVG or OB above the 50% — do not enter in premium",
+        "Fake retracement — FVG filled but discount (50%) not yet reached",
+        "BPR conditions — market skipping the retracement entirely; wait for next expansion",
+        "HRLR / news week before news release — use Model 2022 + OTE instead"
+      ]
+    },
+    {
+      "id": "model-2022-ote",
+      "name": "Model 2022 + OTE (Optimal Trade Entry)",
+      "role": "entry",
+      "description": "Deep retracement entry for HRLR conditions or when price fails to reach 50% after an MSS. Enter in the 62–79% OTE zone on the highest down-close candle (prefer propulsion block). CSD provides earlier entry signal.",
+      "trigger_conditions": {
+        "primary": [
+          "MSS confirmed — ITL taken, then price breaks above the initiating high",
+          "Price fails to retrace to 50% discount after MSS expansion → Model 2022 active"
+        ],
+        "hrlr": [
+          "ORG < 50 handles NQ",
+          "Overlapping candle bodies (inefficiencies filling rather than staying open)",
+          "News week (FOMC/CPI/NFP)"
+        ],
+        "csd_early_entry": [
+          "Group of down-close candles in discount zone",
+          "Price breaches the opening price of those candles (CSD confirmed)"
+        ]
+      },
+      "conditions": [
+        "HTF FVG bias confirmed on 4H (bullish FVG for long entry)",
+        "Opening price: price below midnight/8:30/9:30 opens",
+        "MSS confirmed OR CSD confirmed",
+        "OTE block identified in 62–79% Fibonacci zone (highest down-close candle by body open)",
+        "Propulsion block preferred over base OB when second OB trades into body of first",
+        "Kill zone active",
+        "No major news release within 30 minutes"
+      ],
+      "checklist": [
+        {"id": "htf_fvg_4h", "label": "4H bullish FVG confirmed; price inside it", "timeframe": "4H"},
+        {"id": "opening_price", "label": "Price below midnight open (ideal: also below 8:30 and 9:30)", "timeframe": "Daily/1H"},
+        {"id": "mss_or_csd", "label": "MSS confirmed OR CSD confirmed (breach of down-close candle opens in discount)", "timeframe": "15M/1M"},
+        {"id": "ote_zone", "label": "OTE zone (62–79% Fibonacci) mapped from ITL to expansion swing high", "timeframe": "5M/15M"},
+        {"id": "ote_block", "label": "OTE block identified — highest down-close candle body open in the zone", "timeframe": "5M"},
+        {"id": "propulsion_check", "label": "Propulsion block check: does second OB trade into body of first? Use propulsion block if yes", "timeframe": "5M"},
+        {"id": "concert_705", "label": "OTE block in concert with 0.705 Fibonacci level (preferred — not required)", "timeframe": "5M"},
+        {"id": "kill_zone", "label": "Kill zone active", "timeframe": "intraday"},
+        {"id": "no_news_30m", "label": "No major news release within 30 minutes", "timeframe": "intraday"},
+        {"id": "stop_set", "label": "Stop will be set below OTE block closing price (not below wick)", "timeframe": "1M/5M"},
+        {"id": "dev_targets", "label": "Deviation targets pre-marked (-1 partial, -2/-2.5 runner)", "timeframe": "intraday"}
+      ],
+      "entry": {
+        "zone": "62–79% Fibonacci retracement of the MSS expansion leg",
+        "trigger": "Limit order at 50% of OTE block body (at or above block opening price)",
+        "csd_variant": "Enter on breach of down-close candle opening prices in discount zone"
+      },
+      "stop_logic": "Below the OTE block body's closing price (not below the wick). A true OB will not see its closing price touched after entry.",
+      "target_logic": "T1: first Fibonacci deviation beyond swing high (-1 deviation). Runner: -2 to -2.5 deviation, especially if aligned with HTF FVG (HPDL).",
+      "kill_zones": ["london", "ny_am", "ny_pm"],
+      "avoid_conditions": [
+        "Pre-MSS without CSD — do not enter on suspected STL alone",
+        "50% of expansion already filled — E&R model applies, not OTE",
+        "HRLR with no identifiable OTE block in the 62–79% zone",
+        "Entering from OTE when the HTF FVG has been violated"
+      ],
+      "related_models": ["expansion-retracement-model", "daily-bias-model"]
+    },
+    {
+      "id": "reversal-raid-on-stops",
+      "name": "Reversal — Raid on Stops (80% Reversal)",
+      "role": "entry",
+      "description": "Most common reversal pattern (~80% of reversals). Price sweeps a major liquidity pool (BSL or SSL), collects stops, then immediately rejects. Enter on the first FVG or rejection block in the reversal direction.",
+      "conditions": [
+        "Major liquidity pool identified at weekly/daily/session high or low",
+        "Layered liquidity present (multiple stacked swing points = highest probability)",
+        "HTF bias (4H/Daily) indicates this level swept and reversed, not extended through",
+        "Sweep occurs — price spikes beyond the level with immediate close back through it",
+        "First PDA (FVG or OB) formed on the initial expansion in reversal direction",
+        "CSD or MSS on 1M/15s confirms reversal direction",
+        "Kill zone active"
+      ],
+      "checklist": [
+        {"id": "liquidity_pool", "label": "Major liquidity pool identified (daily/weekly/session high or low)", "timeframe": "Daily/4H/1H"},
+        {"id": "layered_liq", "label": "Layered liquidity present (multiple stacked swing levels)", "timeframe": "Daily/4H"},
+        {"id": "htf_narrative", "label": "HTF FVG or narrative points to this level being swept and reversed (not extended)", "timeframe": "4H/Daily"},
+        {"id": "sweep_occurred", "label": "Sweep occurred — spike beyond level with immediate close back through", "timeframe": "15M/5M"},
+        {"id": "sweep_closed", "label": "Sweep candle closed back through the swept level (same session)", "timeframe": "15M/5M"},
+        {"id": "first_pda", "label": "First FVG or OB identified in the reversal direction from the sweep", "timeframe": "15M/5M"},
+        {"id": "opening_price", "label": "Opening price position confirms reversal direction (above opens for shorts; below for longs)", "timeframe": "Daily/1H"},
+        {"id": "kill_zone", "label": "Kill zone active", "timeframe": "intraday"},
+        {"id": "csd_mss", "label": "CSD or MSS on 1M/15s confirms reversal direction", "timeframe": "1M/15s"},
+        {"id": "smt", "label": "SMT divergence at the sweep (optional — very high confidence add)", "timeframe": "1M–5M", "optional": true}
+      ],
+      "stop_logic": "FVG entry (bearish reversal): above Candle 1 of the bearish FVG. OB entry: above body high of the bearish OB. Rejection block entry: above wick high of the sweep candle.",
+      "target_logic": "T1: origin swing of the trend (must be taken for a true reversal). T2: previous day low / nearest SSL. T3: Fibonacci deviation below the origin swing.",
+      "kill_zones": ["london", "ny_am", "ny_pm"],
+      "probability": "~80% of reversals",
+      "false_positive_signals": [
+        "Sweep candle does not close back through the level — may be a genuine breakout",
+        "HTF FVG is still bullish — likely a retracement opportunity, not a reversal",
+        "Origin swing not subsequently taken out — reclassify as deep retracement"
+      ],
+      "partial_exit_rule": "Always take partials at the rejection block (opening price of the sweep candle) to protect against type 1 failure swings masquerading as type 2.",
+      "avoid_conditions": []
+    },
+    {
+      "id": "london-model",
+      "name": "London Model",
+      "role": "entry",
+      "description": "London takes one side of the Asia consolidation range (SSL for bullish, BSL for bearish) then delivers to the other side. Enter on first PDA at or below the Asia EQ after the London sweep. Occurs 1–3 times per week.",
+      "conditions": [
+        "Asia range identified (candle bodies only; mark high, low, and 50% EQ)",
+        "HTF bias (4H/Daily FVG) aligned with the expected London delivery direction",
+        "Opening price position correct (below midnight/8:30 for longs; above for shorts)",
+        "London kill zone active (02:00–05:00 Eastern)",
+        "Asia SSL swept (for bullish) — wick extends below Asia low, candle closes back above",
+        "Displacement after sweep creates FVG or identifiable PDA at or near the Asia EQ",
+        "PDA is at or below the Asia EQ"
+      ],
+      "checklist": [
+        {"id": "asia_range", "label": "Asia range identified (bodies) — high, low, and EQ marked", "timeframe": "5M/1M"},
+        {"id": "bsl_ssl", "label": "BSL above and SSL below Asia range clearly identified", "timeframe": "5M/1M"},
+        {"id": "htf_fvg", "label": "HTF bias confirmed (4H/Daily bullish FVG for longs)", "timeframe": "4H/Daily"},
+        {"id": "opening_price", "label": "Opening price aligned (below midnight/8:30 open for longs)", "timeframe": "Daily/1H"},
+        {"id": "london_kz", "label": "London kill zone active (02:00–05:00 Eastern)", "timeframe": "intraday"},
+        {"id": "ssl_swept", "label": "Asia SSL swept — wick below Asia range low, candle closed back above", "timeframe": "1M/5M"},
+        {"id": "sweep_rejected", "label": "Sweep rejected immediately — no close below Asia range low", "timeframe": "1M"},
+        {"id": "displacement_pda", "label": "Displacement higher created FVG or identifiable PDA at or near Asia EQ", "timeframe": "1M/5M"},
+        {"id": "pda_at_eq", "label": "PDA confirmed at or below Asia EQ", "timeframe": "5M/15M"},
+        {"id": "kz_still_active", "label": "Kill zone still active at time of entry", "timeframe": "intraday"},
+        {"id": "smt", "label": "SMT divergence at the sweep (optional — highest confidence add)", "timeframe": "1M–5M", "optional": true}
+      ],
+      "stop_logic": "Below the rejection block (opening price of the sweep candle) or below Candle 1 of the FVG entry. Typical stop: 10–15 NQ handles.",
+      "target_logic": "T1: Asia high (BSL — opposite side of the range). T2: previous day high. T3: weekly high or Fibonacci deviation beyond prior swing high.",
+      "kill_zones": ["london"],
+      "frequency": "1–3 times per week; Monday and Tuesday most consistent",
+      "avoid_conditions": [
+        "Sunday London session (no algorithmic delivery principle)",
+        "FOMC/CPI/NFP week before the news release (choppy delivery; reduce size)",
+        "CPI week Monday (low probability — skip entirely)",
+        "Holding through a news release within the London window"
+      ],
+      "smt_signal": "At Asia SSL sweep: if ES fails to take the same lower low as NQ (or vice versa) — bullish SMT divergence. Highest confidence version of the London model."
+    },
+    {
+      "id": "smt-confirmation-entry",
+      "name": "SMT Confirmation Entry (Intermarket Divergence)",
+      "role": "confirmation_confluence",
+      "description": "Highest-confidence confluence layer. Uses NQ/ES/YM intermarket divergence to confirm the Power of Three manipulation leg is complete. Not standalone — requires pre-existing HTF bias and a PDA entry trigger.",
+      "instruments": {
+        "triad": ["NQ", "ES", "YM"],
+        "primary_watch": "ES",
+        "confirming_index": "YM"
+      },
+      "smt_signal": {
+        "bullish": {
+          "condition": "NQ (or YM) makes lower low; ES makes higher low at the same level",
+          "meaning": "Smart money accumulating; manipulation leg complete"
+        },
+        "bearish": {
+          "condition": "ES makes higher high; NQ makes lower high at same level",
+          "meaning": "Smart money distributing; manipulation leg complete"
+        },
+        "pdr_variant": {
+          "condition": "Two indices tap a shared PDA; one does not react at the same time",
+          "entry": "Inversion FVG or next LTF signal at the failing index's reaction zone"
+        }
+      },
+      "conditions": [
+        "HTF FVG bias confirmed on 4H",
+        "Opening price position correct (below midnight for longs; above for shorts)",
+        "Price at a major liquidity level (minimum 15M swing magnitude)",
+        "SMT divergence confirmed at that level during an active kill zone",
+        "Contract rollover not in effect (using the fresher front-month contract)",
+        "No manual intervention signals present"
+      ],
+      "checklist": [
+        {"id": "htf_fvg", "label": "4H FVG bias confirmed", "timeframe": "4H"},
+        {"id": "opening_price", "label": "Opening price position correct (below midnight for longs)", "timeframe": "Daily/1H"},
+        {"id": "major_liquidity", "label": "Price at a major liquidity level (15M+ swing high or low)", "timeframe": "15M/1H"},
+        {"id": "kill_zone", "label": "Kill zone active (London or NY AM = highest probability)", "timeframe": "intraday"},
+        {"id": "three_chart_setup", "label": "Three-chart setup ready: ES | NQ | YM (current front-month contracts)"},
+        {"id": "rollover_check", "label": "Contract rollover check: using fresher contract (higher volume = lead contract)"},
+        {"id": "smt_confirmed", "label": "SMT signal confirmed: one index makes new extreme; the other fails at the same level", "timeframe": "15M/1H"},
+        {"id": "ltf_entry", "label": "LTF entry signal identified at reversal zone (inversion FVG / rejection block / CSD)", "timeframe": "1M/5M"},
+        {"id": "stop_placed", "label": "Stop will be placed below sweep low (or above sweep high for shorts)", "timeframe": "1M/5M"},
+        {"id": "dev_targets", "label": "Deviation targets pre-marked (-1 partial, -2/-2.5 runner)"}
+      ],
+      "entry_signals_priority": [
+        "Inversion FVG at the reversal zone (prior bearish FVG closed above → now bullish support)",
+        "Rejection block (opening price of the manipulation sweep candle)",
+        "CSD (breach of down-close candle opening prices in discount)",
+        "OTE block (if retracement is deep enough to reach 62–79%)"
+      ],
+      "stop_logic": "Below the liquidity sweep low (bullish SMT) or above the sweep high (bearish SMT).",
+      "target_logic": "T1: first deviation beyond the opposite swing (-1 deviation). Runner: -2 to -2.5 deviation; extend to -4/-7 if inside a major HTF FVG (HPDL).",
+      "kill_zones": ["london", "ny_am"],
+      "avoid_conditions": [
+        "No opposing liquidity taken before SMT signal — divergence without a sweep is noise",
+        "Contract rollover — stale expiring contracts produce false divergence; check volume",
+        "Manual intervention in progress",
+        "SMT signal outside active kill zones (lunch, overnight outside London KZ)",
+        "No pre-existing HTF bias"
+      ],
+      "trust_program_when": [
+        "Sell-side liquidity pool taken (15M+ swing low swept) before bullish SMT signal",
+        "After sweep: bullish PDAs hold and FVGs stay open (LRLR delivery begins)"
+      ],
+      "related_models": [
+        "daily-bias-model",
+        "reversal-raid-on-stops",
+        "consolidation-model",
+        "london-model"
+      ]
+    }
+  ]
+}

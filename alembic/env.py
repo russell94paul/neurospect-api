@@ -1,4 +1,3 @@
-import os
 from logging.config import fileConfig
 
 from dotenv import load_dotenv
@@ -15,6 +14,7 @@ import app.models.trade  # noqa: F401
 import app.models.screenshot  # noqa: F401
 import app.models.tv_token  # noqa: F401
 import app.models.coaching_event  # noqa: F401
+from app.config import settings as app_settings
 
 config = context.config
 
@@ -23,10 +23,7 @@ if config.config_file_name is not None:
 
 target_metadata = Base.metadata
 
-# Override sqlalchemy.url with DATABASE_URL_SYNC from environment
-database_url_sync = os.environ.get("DATABASE_URL_SYNC")
-if database_url_sync:
-    config.set_main_option("sqlalchemy.url", database_url_sync)
+config.set_main_option("sqlalchemy.url", app_settings.sync_database_url)
 
 
 def run_migrations_offline() -> None:

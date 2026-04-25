@@ -1,0 +1,46 @@
+services:
+  - type: web
+    name: neurospect-api
+    runtime: python
+    region: oregon
+    plan: starter
+    buildCommand: pip install -r requirements.txt
+    preDeployCommand: alembic upgrade head
+    startCommand: gunicorn app.main:app -k uvicorn.workers.UvicornWorker -w 2 -b 0.0.0.0:$PORT --graceful-timeout 30 --timeout 60
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: neurospect-db
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: DISCORD_CLIENT_ID
+        sync: false
+      - key: DISCORD_CLIENT_SECRET
+        sync: false
+      - key: TRADINGVIEW_WEBHOOK_SECRET
+        generateValue: true
+      - key: PUBLIC_BASE_URL
+        sync: false
+      - key: CORS_ORIGINS
+        sync: false
+      - key: R2_ENDPOINT_URL
+        sync: false
+      - key: R2_ACCESS_KEY_ID
+        sync: false
+      - key: R2_SECRET_ACCESS_KEY
+        sync: false
+      - key: R2_BUCKET
+        sync: false
+      - key: DEBUG
+        value: "false"
+
+databases:
+  - name: neurospect-db
+    plan: starter
+    postgresMajorVersion: 16
+    region: oregon

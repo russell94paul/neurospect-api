@@ -20,6 +20,7 @@ python-multipart = "^0.0.20"
 boto3 = "^1.37"
 psycopg2-binary = "^2.9"
 anthropic = "^0.40"
+gunicorn = "^23.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.0"

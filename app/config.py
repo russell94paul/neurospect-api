@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -6,7 +8,26 @@ class Settings(BaseSettings):
 
     # Database
     database_url: str
-    database_url_sync: str
+    database_url_sync: str = ""
+
+    @property
+    def async_database_url(self) -> str:
+        url = self.database_url
+        if url.startswith("postgres://"):
+            return url.replace("postgres://", "postgresql+asyncpg://", 1)
+        return url
+
+    @property
+    def sync_database_url(self) -> str:
+        # Prefer explicit DATABASE_URL_SYNC; fall back to deriving from DATABASE_URL.
+        url = self.database_url_sync or self.database_url
+        if url.startswith("postgres://"):
+            return url.replace("postgres://", "postgresql+psycopg2://", 1)
+        if url.startswith("postgresql://"):
+            return url.replace("postgresql://", "postgresql+psycopg2://", 1)
+        if url.startswith("postgresql+asyncpg://"):
+            return url.replace("postgresql+asyncpg://", "postgresql+psycopg2://", 1)
+        return url
 
     # JWT
     jwt_secret: str
@@ -32,8 +53,8 @@ class Settings(BaseSettings):
     claude_model: str = "claude-sonnet-4-6"
     claude_max_tokens: int = 2048
     claude_timeout_seconds: float = 30.0
-    ai_coach_prompt_dir: str = (
-        "C:/Users/PaulRussell/repos/neurospect-wiki/concepts/ai-coach"
+    ai_coach_prompt_dir: str = str(
+        Path(__file__).parent / "coach" / "prompts"
     )
 
     # CORS — comma-separated allowed origins (e.g. "http://localhost:5173,https://neurospect.app")
