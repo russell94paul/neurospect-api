@@ -74,7 +74,7 @@ async def get_current_token(
 async def revoke_token(
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
-) -> None:
+) -> Response:
     await db.execute(
         update(TradingViewToken)
         .where(
@@ -84,3 +84,4 @@ async def revoke_token(
         .values(revoked_at=datetime.now(timezone.utc))
     )
     await db.commit()
+    return Response(status_code=status.HTTP_204_NO_CONTENT)

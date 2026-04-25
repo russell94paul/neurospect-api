@@ -124,7 +124,7 @@ async def delete_screenshot(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
     storage: R2Client = Depends(get_r2),
-):
+) -> Response:
     result = await db.execute(
         select(TradeScreenshot).where(
             TradeScreenshot.id == screenshot_id,
@@ -136,3 +136,4 @@ async def delete_screenshot(
     storage.delete(ss.storage_key)
     await db.delete(ss)
     await db.commit()
+    return Response(status_code=status.HTTP_204_NO_CONTENT)

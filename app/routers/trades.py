@@ -145,10 +145,11 @@ async def delete_trade(
     trade_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
-):
+) -> Response:
     result = await db.execute(select(Trade).where(Trade.id == trade_id))
     trade = _assert_ownership(result.scalar_one_or_none(), current_user.id)
 
     trade.is_deleted = True
     trade.deleted_at = datetime.now(timezone.utc)
     await db.commit()
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
