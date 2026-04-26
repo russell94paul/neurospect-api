@@ -2,7 +2,7 @@ import uuid
 from datetime import date, datetime
 from decimal import Decimal
 
-from sqlalchemy import Boolean, Date, DateTime, Enum as SAEnum, ForeignKey, Numeric, String, Text, func
+from sqlalchemy import Boolean, Date, DateTime, Enum as SAEnum, ForeignKey, Integer, Numeric, String, Text, func
 from sqlalchemy.dialects.postgresql import ARRAY, UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -60,6 +60,7 @@ class Trade(Base):
     # Entry (nullable until taken)
     entry_price: Mapped[Decimal | None] = mapped_column(Numeric(12, 4))
     entry_time: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    position_size: Mapped[int | None] = mapped_column(Integer)
     stop_price: Mapped[Decimal | None] = mapped_column(Numeric(12, 4))
     stop_logic: Mapped[str | None] = mapped_column(Text)
     target_price: Mapped[Decimal | None] = mapped_column(Numeric(12, 4))

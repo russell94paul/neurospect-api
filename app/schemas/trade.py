@@ -39,6 +39,7 @@ class TradeCreate(BaseModel):
     # Entry fields (provided when trade is taken)
     entry_price: Decimal | None = None
     entry_time: datetime | None = None
+    position_size: int | None = None
     stop_price: Decimal | None = None
     stop_logic: str | None = None
     target_price: Decimal | None = None
@@ -67,6 +68,7 @@ class TradeUpdate(BaseModel):
     # Entry fields
     entry_price: Decimal | None = None
     entry_time: datetime | None = None
+    position_size: int | None = None
     stop_price: Decimal | None = None
     stop_logic: str | None = None
     target_price: Decimal | None = None
@@ -116,6 +118,7 @@ class TradeResponse(BaseModel):
     # Entry
     entry_price: Decimal | None
     entry_time: datetime | None
+    position_size: int | None
     stop_price: Decimal | None
     stop_logic: str | None
     target_price: Decimal | None
