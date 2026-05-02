@@ -64,6 +64,16 @@ class Settings(BaseSettings):
     # CORS — comma-separated allowed origins (e.g. "http://localhost:5173,https://neurospect.app")
     cors_origins: list[str] = ["http://localhost:5173"]
 
+    # Broker credentials encryption (Fernet key — required, no default)
+    # Generate: python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
+    broker_cred_secret: str
+
+    # Tradovate developer app credentials (from tradovate.com/developer)
+    # Without a real cid/sec, Tradovate triggers a CAPTCHA challenge (PRISM security).
+    tradovate_app_id: str = "NeurospectDev"
+    tradovate_cid: int = 0
+    tradovate_sec: str = ""
+
     # Debug mode — enables /auth/debug/token; never true in prod
     debug: bool = False
 

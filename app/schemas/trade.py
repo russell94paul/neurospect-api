@@ -1,6 +1,7 @@
 import uuid
 from datetime import date, datetime
 from decimal import Decimal
+from typing import Literal
 
 from pydantic import BaseModel, ConfigDict
 
@@ -47,6 +48,9 @@ class TradeCreate(BaseModel):
     entry_pda: PdaType | None = None
     displacement_quality: DisplacementType | None = None
     smt_confirmation: bool | None = None
+
+    # Allow creating in a non-default status (rare; triggers singleton guard if active)
+    status: TradeStatus = TradeStatus.pre_trade
 
 
 class TradeUpdate(BaseModel):
@@ -140,6 +144,10 @@ class TradeResponse(BaseModel):
     quality_grade: GradeType | None
     post_trade_notes: str | None
 
+    # Broker fill IDs (read-only; set via apply-tradovate-fill endpoint in 1c)
+    tradovate_fill_id_entry: int | None
+    tradovate_fill_id_exit: int | None
+
     # Metadata
     status: TradeStatus
     created_at: datetime
@@ -153,3 +161,8 @@ class TradeListResponse(BaseModel):
     total: int
     page: int
     page_size: int
+
+
+class ApplyFillRequest(BaseModel):
+    tradovate_fill_id: int
+    role: Literal['entry', 'exit']

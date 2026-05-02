@@ -2,7 +2,7 @@ import uuid
 from datetime import date, datetime
 from decimal import Decimal
 
-from sqlalchemy import Boolean, Date, DateTime, Enum as SAEnum, ForeignKey, Integer, Numeric, String, Text, func
+from sqlalchemy import BigInteger, Boolean, Date, DateTime, Enum as SAEnum, ForeignKey, Integer, Numeric, String, Text, func
 from sqlalchemy.dialects.postgresql import ARRAY, UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -89,6 +89,10 @@ class Trade(Base):
         SAEnum(GradeType, name="grade_type", create_type=False)
     )
     post_trade_notes: Mapped[str | None] = mapped_column(Text)
+
+    # Broker fill IDs (set by apply-tradovate-fill in 1c; not patchable directly)
+    tradovate_fill_id_entry: Mapped[int | None] = mapped_column(BigInteger)
+    tradovate_fill_id_exit: Mapped[int | None] = mapped_column(BigInteger)
 
     # Metadata
     status: Mapped[TradeStatus] = mapped_column(

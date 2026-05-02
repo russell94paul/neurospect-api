@@ -10,6 +10,7 @@ from app.database import engine
 from app.routers.analytics import router as analytics_router
 from app.routers.screenshots import router as screenshots_router
 from app.routers.trades import router as trades_router
+from app.routers.tradovate import router as tradovate_router
 from app.routers.tv_tokens import router as tv_tokens_router
 
 
@@ -52,5 +53,6 @@ app.include_router(analytics_router)
 
 # AI Coach
 app.include_router(tv_tokens_router)
+app.include_router(tradovate_router)
 app.include_router(webhook_router)
 app.include_router(events_router)
